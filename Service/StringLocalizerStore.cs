@@ -2,10 +2,10 @@
 using GoI18n;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 
@@ -14,6 +14,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
     public interface IStringLocalizerStore
     {
+        /// <summary>
+        /// 是否可加载
+        /// </summary>
+        bool IsSuccessed { get; }
+
         /// <summary>
         /// 获取本地化资源
         /// </summary>
@@ -33,27 +38,42 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="name"></param>
         /// <returns></returns>
         string GetString(string name);
-        void Reload(string culture);
-        void ReloadAll();
+
+        /// <summary>
+        /// /// 重载本地化资源
+        /// </summary>
+        /// <returns></returns>
+        Task ReloadAsync();
     }
     public class StringLocalizerStore : IStringLocalizerStore
     {
-        readonly Dictionary<string, ReadOnlyDictionary<string, string>> _localizerCache = new Dictionary<string, ReadOnlyDictionary<string, string>>();
-        readonly ReadOnlyDictionary<string, string> _resources;
+        readonly IMemoryCache _memoryCache;
+        ReadOnlyDictionary<string, string> _resources;
         readonly ILocalizerChannel _i18NChannel;
-        public StringLocalizerStore(ILocalizerChannel i18NChannel, ILogger<StringLocalizerStore> logger)
+        readonly ILogger<StringLocalizerStore> _logger;
+        private bool _canLoad;
+        public StringLocalizerStore(ILocalizerChannel i18NChannel, ILogger<StringLocalizerStore> logger, IMemoryCache memoryCache)
         {
             _i18NChannel = i18NChannel;
+            _logger = logger;
+            _memoryCache = memoryCache;
+            LoadResource().GetAwaiter().GetResult();
+        }
+
+        private async Task LoadResource()
+        {
             var code = CultureInfo.CurrentCulture.Name;
-            if (_localizerCache.TryGetValue(code, out var localizer))
+            if (_memoryCache.TryGetValue(code, out Dictionary<string, string>? data) && data != null)
             {
-                _resources = localizer;
+                _resources = new ReadOnlyDictionary<string, string>(data);
                 return;
             }
+            _logger.LogInformation("loading localizer resource ...");
+
             var resources = new Dictionary<string, string>();
             try
             {
-                var res = i18NChannel.Client.GetCultureResources(new CultureCodeRequest
+                var res = await _i18NChannel.Client.GetCultureResourcesAsync(new CultureCodeRequest
                 {
                     Code = code
                 });
@@ -63,15 +83,19 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                     {
                         resources.Add(item.Key, item.Text);
                     }
-                    _localizerCache[code] = new ReadOnlyDictionary<string, string>(resources);
+                    _memoryCache.Set(code, resources);
                 }
                 else
                 {
-                    logger.LogError("GetCultureResources failed: {0}", res.Message);
+                    _logger.LogError("GetCultureResources failed: {0}", res.Message);
                 }
+                _canLoad = true;
             }
-            catch { }
-            _resources = new ReadOnlyDictionary<string, string>(resources); ;
+            catch
+            {
+                _canLoad = false;
+            }
+            _resources = new ReadOnlyDictionary<string, string>(resources);
         }
         /// <summary>
         /// 获取本地化资源
@@ -119,21 +143,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
         public async Task<CultureItem[]> GetCultures()
         {
-            try
+            var res = await _i18NChannel.Client.CultureFeatureAsync(new CulturesRequest
             {
-                var res = await _i18NChannel.Client.CultureFeatureAsync(new CulturesRequest
-                {
-                    Action = ActionTypes.List
-                });
-                if (res.Code == ReplyCode.Success)
-                {
-                  return res.Items.ToArray();
-                }
-            }
-            catch (Exception)
+                Action = ActionTypes.List
+            });
+            if (res.Code == ReplyCode.Success)
             {
-
-                throw;
+                return res.Items.ToArray();
             }
             return Array.Empty<CultureItem>();
         }
@@ -141,20 +157,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <summary>
         /// 重载本地化资源
         /// </summary>
-        public void ReloadAll() => _localizerCache.Clear();
-
-        /// <summary>
-        /// /// 重载本地化资源
-        /// </summary>
-        /// <param name="culture"></param>
-        public void Reload(string culture)
+        public Task ReloadAsync()
         {
-            if (_localizerCache.ContainsKey(culture))
-            {
-                _localizerCache.Remove(culture);
-            }
+            _memoryCache.Remove(CultureInfo.CurrentCulture.Name);
+            return LoadResource();
         }
-
+        public bool IsSuccessed => _canLoad;
     }
 
     public static class StringLocalizerStoreExtensions
@@ -166,12 +174,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         public static IServiceCollection AddStringLocalizerStore(this IServiceCollection services)
         {
+            services.TryAddSingleton<IMemoryCache, MemoryCache>();
             services.TryAddScoped<IStringLocalizerStore, StringLocalizerStore>();
             return services;
         }
 
         /// <summary>
-        /// /// 添加本地化资源服务
+        /// 添加本地化资源服务
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>
@@ -183,10 +192,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 using var _newScope = _scopeFactory.CreateScope();
 
                 var localizerStore = _newScope.ServiceProvider.GetRequiredService<IStringLocalizerStore>();
-                if (localizerStore != null)
+                if (localizerStore != null && localizerStore.IsSuccessed)
                 {
-                    var culture = CultureInfo.CurrentCulture.Name;
                     var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
+                    if (resources == null || resources.Length == 0)
+                    {
+                        return app;
+                    }
                     var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
                     var defaultCulture = resources.FirstOrDefault(w => w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
                     app.UseRequestLocalization(new RequestLocalizationOptions
@@ -199,7 +211,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             }
             catch (Exception ex)
             {
-                Console.WriteLine(  ex.Message);
+               
             }
            
             return app;
