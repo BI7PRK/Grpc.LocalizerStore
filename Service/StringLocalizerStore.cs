@@ -45,7 +45,6 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         {
             _i18NChannel = i18NChannel;
             var code = CultureInfo.CurrentCulture.Name;
-            logger.LogInformation("code: {0}", code);
             if (_localizerCache.TryGetValue(code, out var localizer))
             {
                 _resources = localizer;
@@ -176,23 +175,33 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>
-        public static IApplicationBuilder UsRequestLocalizatioStore(this IApplicationBuilder app)
+        public static IApplicationBuilder UseRequestLocalizatioStore(this IApplicationBuilder app)
         {
-            var localizerStore = app.ApplicationServices.GetService<IStringLocalizerStore>();
-            if (localizerStore != null)
+            try
             {
-                var culture = CultureInfo.CurrentCulture.Name;
-                var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
+                var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
+                using var _newScope = _scopeFactory.CreateScope();
 
-                var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
-                var defaultCulture = resources.FirstOrDefault(w=>w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
-                app.UseRequestLocalization(new RequestLocalizationOptions
+                var localizerStore = _newScope.ServiceProvider.GetRequiredService<IStringLocalizerStore>();
+                if (localizerStore != null)
                 {
-                    DefaultRequestCulture = new RequestCulture(defaultCulture),
-                    SupportedCultures = supportedCultures,
-                    SupportedUICultures = supportedCultures
-                });
+                    var culture = CultureInfo.CurrentCulture.Name;
+                    var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
+                    var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
+                    var defaultCulture = resources.FirstOrDefault(w => w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
+                    app.UseRequestLocalization(new RequestLocalizationOptions
+                    {
+                        DefaultRequestCulture = new RequestCulture(defaultCulture),
+                        SupportedCultures = supportedCultures,
+                        SupportedUICultures = supportedCultures
+                    });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(  ex.Message);
+            }
+           
             return app;
         }
     }
