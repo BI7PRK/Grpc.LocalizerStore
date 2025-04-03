@@ -64,10 +64,14 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                     logger.LogError("GetCultureResources failed: {0}", res.Message);
                 }
             }
-            catch {  }
+            catch { }
             _resources = new ReadOnlyDictionary<string, string>(resources); ;
         }
-
+        /// <summary>
+        /// 获取本地化资源
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public string GetString(string name)
         {
             if (_resources.TryGetValue(name, out var value))
@@ -79,7 +83,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 return name;
             }
         }
-
+        /// <summary>
+        /// 获取本地化资源
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public string this[string name]
         {
             get
@@ -94,11 +102,18 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 }
             }
         }
-
+        /// <summary>
+        /// 获取所有的本地化资源
+        /// </summary>
+        /// <returns></returns>
         public ReadOnlyDictionary<string, string> GetAllStrings()
         {
             return _resources;
         }
+        /// <summary>
+        /// 重载本地化资源
+        /// </summary>
+        public void Reload() => _localizerCache.Clear();
     }
 
     public static class StringLocalizerStoreExtensions
