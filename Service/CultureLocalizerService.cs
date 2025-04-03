@@ -3,6 +3,8 @@ using GoI18n;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
+using static Grpc.Core.Metadata;
 
 namespace AspNetCore.Grpc.LocalizerStore.Service
 {
@@ -81,6 +83,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="id"></param>
         /// <returns></returns>
         Task<CulturesTypesReply> RemoveResourceTypeAsync(int id);
+
+        /// <summary>
+        /// 导入本地化资源到数据库
+        /// </summary>
+        /// <param name="assemblyType"></param>
+        /// <returns></returns>
+        Task<IEnumerable<LocalizerResource>> ImportRsource(Type assemblyType);
     }
 
     public class CultureLocalizerService : ICultureLocalizerService
@@ -221,6 +230,93 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             });
         }
 
+
+        #region 工具方法       
+        public async Task<IEnumerable<LocalizerResource>> ImportRsource(Type assemblyType)
+        {
+            var dataSource = FindAllResources(assemblyType);
+            if (!dataSource.Any()) return dataSource;
+            var c = await _channel.CultureFeatureAsync(new CulturesRequest
+            {
+                Action = ActionTypes.List,
+
+            });
+            var cultures = c.Items.ToList();
+            foreach (var item in dataSource)
+            {
+                try
+                {
+                    var cultureId = cultures.FirstOrDefault(f => f.Code == item.Code)?.Id ?? 0;
+                    var res = await _channel.AddResourceKeyValueAsync(new AddCultureKeyValueRequest
+                    {
+                        Key = item.Key,
+                        Values = { new CultureKeyValue { CultureId = cultureId, Text = item.Value } },
+                        TypeId = item.Tid
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "AddResourceKeyValueAsync failed: {0}", ex.Message);
+                    break;
+                }
+               
+            }
+            return dataSource;
+        }
+        /// <summary>
+        /// 获取项目内的所有国际化资源
+        /// </summary>
+        /// <param name="AssemblyType"></param>
+        /// <returns></returns>
+        private IEnumerable<LocalizerResource> FindAllResources(Type AssemblyType)
+        {
+            var result = new List<LocalizerResource>();
+            var filelocal = AssemblyType.Assembly.Location;
+            var dir = Path.GetDirectoryName(filelocal);
+            ArgumentNullException.ThrowIfNull(nameof(dir));
+
+            var MayaAssemblys = new List<string>();
+            foreach (var item in Directory.GetFiles(dir!, "*.dll"))
+            {
+                var source = GetResource(Path.GetFileName(item).Replace(".dll", ""));
+                if (source.Any()) result.AddRange(source);
+            }
+            return result.DistinctBy(k => k.Key);
+        }
+        private List<LocalizerResource> GetResource(string name)
+        {
+            var result = new List<LocalizerResource>();
+            var subClass = typeof(ILocalizerResourceKeys);
+            var Resource = Assembly.Load(name).GetTypes().Where(w => w.IsInterface == false && subClass.IsAssignableFrom(w));
+            foreach (var item in Resource)
+            {
+                foreach (var field in item.GetFields(BindingFlags.Static | BindingFlags.Public))
+                {
+                    var attr = field.GetCustomAttribute<LocalizerDefaultAttribute>();
+                    if (attr == null) continue;
+                    var key = field.GetValue(item)?.ToString();
+                    result.Add(new LocalizerResource
+                    {
+                        Code = attr.Code ?? "zh-CN",
+                        Value = attr.Value ?? "",
+                        Key = (key ?? field.Name).ToUpper(),
+                        Tid = attr.Tid,
+                    });
+                }
+
+            }
+            return result;
+        } 
+        #endregion
+    }
+
+    public class LocalizerResource
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
+        public string Code { get; set; }
+
+        public int Tid { get; set; }
     }
 
     public static class CultureLocalizerServiceExtensions

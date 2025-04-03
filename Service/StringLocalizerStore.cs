@@ -68,7 +68,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 _resources = new ReadOnlyDictionary<string, string>(data);
                 return;
             }
-            _logger.LogInformation("loading localizer resource ...");
+            _logger.LogInformation($"loading localizer resource ...{code}");
 
             var resources = new Dictionary<string, string>();
             try
