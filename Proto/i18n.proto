@@ -1,0 +1,153 @@
+syntax = "proto3";
+package i18n;
+option go_package = "./proto";
+option csharp_namespace = "GoI18n";
+
+service I18nService {
+    // 国家语言功能
+    rpc CultureFeature(CulturesRequest) returns (CulturesReply);
+    // 语言资源类型功能
+    rpc CulturesResourceTypeFeature(CultureTypesRequest) returns (CulturesTypesReply);
+    // 语言资源key功能
+    rpc CulturesResourceKeyFeature(CultureKeysRequest) returns (CultureKeysReply);
+    // 语言资源key值功能
+    rpc CulturesResourceKeyValueFeature(CultureKeyValuesRequest) returns (CultureKeyValuesReply);
+    // 添加资源key和多个语言翻译
+    rpc AddResourceKeyValue(AddCultureKeyValueRequest) returns (CultureBaseReply);
+    // 根据语言代码获取翻译资源
+    rpc GetCultureResources(CultureCodeRequest) returns (CultureResourcesReply);
+   
+}
+
+message CultureCodeRequest {
+    string code = 1;
+}
+
+message CultureResourcesReply {
+    repeated CultureResourceItem items = 1;
+    ReplyCode code  = 2;
+    string message = 3;
+}
+
+message CultureResourceItem {
+    string key = 1; // 语言资源key
+    string text = 2; // 语言翻译
+}
+
+message CultureBaseReply {
+    ReplyCode code = 1;
+    string message = 2;
+}
+
+message CulturesRequest {
+    ActionTypes action = 1;
+    CultureItem param_data = 2;
+    int32 index = 3;
+    int32 size = 4;
+}
+
+message CulturesReply {
+    repeated CultureItem items = 1;
+    int64 total = 2;
+    ReplyCode code  = 3;
+    string message = 4;
+}
+message CultureItem {
+    int64 id = 1;
+    string name = 2; // 语言名称
+    string code = 3; // 语言代码
+    bool is_default = 4; // 是否默认语言
+}
+
+
+message CultureTypesRequest {
+    ActionTypes action = 1;
+    CultureTypeItem param_data = 2;
+    int32 index = 3;
+    int32 size = 4;
+    repeated int32 culture_ids = 5;
+}
+message CulturesTypesReply {
+    repeated CultureTypeItem items = 1;
+    int64 total = 2;
+    ReplyCode code  = 3;
+    string message = 4;
+}
+message CultureTypeItem {
+    int64 id = 1;
+    string name = 2; // 语言资源类型名称
+    string remark = 3; // 备注
+}
+
+message CultureKeysRequest {
+    ActionTypes action = 1;
+    CultureKeyItem param_data = 2;
+    int32 index = 3;
+    int32 size = 4;
+}
+
+message CultureKeysReply {
+    repeated CultureKeyItem items = 1;
+    int64 total = 2;
+    ReplyCode code  = 3;
+    string message = 4;
+}
+
+message CultureKeyItem {
+    int32 id = 1;
+    string name = 2; // 语言资源key名称
+    int32 type_id = 3; // 语言资源类型ID
+    string type_name = 4; // 语言资源类型名称
+}
+
+message CultureKeyValuesRequest {
+    ActionTypes action = 1;
+    CultureKeyValueItem param_data = 2;
+    int32 index = 3;
+    int32 size = 4;
+    string search_key = 5; // 搜索Key名
+}
+message CultureKeyValuesReply {
+    repeated CultureKeyValueItem items = 1;
+    int64 total = 2;
+    ReplyCode code  = 3;
+    string message = 4;
+}
+
+message CultureKeyValueItem {
+    int64 id = 1;
+    int32 culture_id = 2; // 语言ID
+    int32 key_id = 3; // 语言资源key ID
+    string text = 4; // 语言翻译
+}
+
+message AddCultureKeyValueRequest {
+   string key = 1; // 语言资源key
+   repeated CultureKeyValue values = 2; // 语言翻译
+   int32 type_id = 3; // 语言资源类型ID
+}
+
+message CultureKeyValue {
+    int32 culture_id = 2; // 语言ID
+    string text = 4; // 语言翻译
+}
+
+
+enum ActionTypes{
+    List = 0;
+    AddOrUpdate = 1;
+    Delete = 2;
+    Get = 3;
+}
+
+enum ReplyCode {
+    Success = 0;
+    Error = 1;
+    NotFound = 2;
+    DataBaseError = 3;
+    InvalidParam = 4;
+    InvalidData = 5;
+    InvalidAction = 6;
+    DataExists = 7;
+    DataNotExists = 8;
+}
