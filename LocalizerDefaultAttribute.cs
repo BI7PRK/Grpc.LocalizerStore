@@ -1,6 +1,8 @@
 ﻿namespace AspNetCore.Grpc.LocalizerStore
 {
-
+    /// <summary>
+    /// 用于语言翻译的属性标识
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class LocalizerDefaultAttribute : Attribute
     {

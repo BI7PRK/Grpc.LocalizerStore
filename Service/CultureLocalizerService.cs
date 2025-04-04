@@ -322,7 +322,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
     public static class CultureLocalizerServiceExtensions
     {
         /// <summary>
-        /// /// 添加本地化资源管理服务
+        /// 添加本地化资源管理服务
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>

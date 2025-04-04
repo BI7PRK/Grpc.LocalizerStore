@@ -30,6 +30,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// </summary>
         /// <returns></returns>
         ReadOnlyDictionary<string, string> GetAllStrings();
+
+        /// <summary>
+        /// 获取支持的语言
+        /// </summary>
+        /// <returns></returns>
         Task<CultureItem[]> GetCultures();
 
         /// <summary>
@@ -162,13 +167,14 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             _memoryCache.Remove(CultureInfo.CurrentCulture.Name);
             return LoadResource();
         }
+
         public bool IsSuccessed => _canLoad;
     }
 
     public static class StringLocalizerStoreExtensions
     {
         /// <summary>
-        /// /// 添加本地化资源服务
+        /// 添加本地化资源服务
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>
@@ -191,7 +197,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
                 using var _newScope = _scopeFactory.CreateScope();
 
-                var localizerStore = _newScope.ServiceProvider.GetRequiredService<IStringLocalizerStore>();
+                var localizerStore = _newScope.ServiceProvider.GetService<IStringLocalizerStore>();
                 if (localizerStore != null && localizerStore.IsSuccessed)
                 {
                     var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
