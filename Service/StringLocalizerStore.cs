@@ -92,7 +92,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 }
                 else
                 {
-                    _logger.LogError("GetCultureResources failed: {0}", res.Message);
+                    _logger.LogError("GetCultureResources failed: {Message}", res.Message);
                 }
                 _canLoad = true;
             }
@@ -154,9 +154,9 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             });
             if (res.Code == ReplyCode.Success)
             {
-                return res.Items.ToArray();
+                return [.. res.Items];
             }
-            return Array.Empty<CultureItem>();
+            return [];
         }
 
         /// <summary>

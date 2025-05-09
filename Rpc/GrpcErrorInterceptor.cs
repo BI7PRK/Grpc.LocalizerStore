@@ -22,7 +22,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
                 logger.LogError(ex, "调用GRPC异常 Call Method:{MethodFullName} Request: {Request} HttpUrl:{MethodName}", context.Method.FullName, request, context.Method.Name);
                 throw new Exception(ex.Status.Detail);
             }
-            catch (Exception ex)
+            catch
             {
                 return Activator.CreateInstance<TResponse>();
             }
@@ -49,7 +49,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
                 logger.LogError(ex, $"调用GRPC异常 Call Method:{method.FullName} Request: {request}");
                 throw new Exception(ex.Status.Detail);
             }
-            catch (Exception ex)
+            catch
             {
                 return Activator.CreateInstance<TResponse>();
             }

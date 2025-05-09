@@ -21,12 +21,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// </summary>
         public string Url { get; set; } = "";
 
-        public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> Headers { get; set; } = [];
     }
 
     public class LocalizerChannelBasic
     {
-        public CallInvoker GetGrpcChannel(GrpcErrorInterceptor errorInterceptor, LocalizerChannelOptions option)
+        public static CallInvoker GetGrpcChannel(GrpcErrorInterceptor errorInterceptor, LocalizerChannelOptions option)
         {
             var defaultMethodConfig = new MethodConfig
             {
@@ -67,8 +67,8 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
     public class LocalizerChannel : LocalizerChannelBasic, ILocalizerChannel
     {
 
-        private I18nService.I18nServiceClient _channel;
-        public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, ILoggerFactory loggerFactory, LocalizerChannelOptions option)
+        private readonly I18nService.I18nServiceClient _channel;
+        public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerChannelOptions option)
         {
             var _grpcChannel = GetGrpcChannel(errorInterceptor, option);
             _channel = new I18nService.I18nServiceClient(_grpcChannel);

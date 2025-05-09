@@ -6,9 +6,9 @@
     [AttributeUsage(AttributeTargets.Field)]
     public class LocalizerDefaultAttribute : Attribute
     {
-        private string langValue;
-        private string langCode;
-        private int langTid;
+        private readonly string langValue;
+        private readonly string langCode;
+        private readonly int langTid;
 
         /// <summary>
         /// 语言翻译文
