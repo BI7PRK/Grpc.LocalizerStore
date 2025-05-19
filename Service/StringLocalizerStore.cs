@@ -86,7 +86,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 {
                     foreach (var item in res.Items)
                     {
-                        resources.Add(item.Key, item.Text);
+                        resources.Add(item.Key.ToUpper(), item.Text);
                     }
                     _memoryCache.Set(code, resources);
                 }
@@ -109,7 +109,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         public string GetString(string name)
         {
-            if (_resources.TryGetValue(name, out var value))
+            if (_resources.TryGetValue(name.ToUpper(), out var value))
             {
                 return value;
             }
@@ -127,7 +127,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         {
             get
             {
-                if (_resources.TryGetValue(name, out var value))
+                if (_resources.TryGetValue(name.ToUpper(), out var value))
                 {
                     return value;
                 }
