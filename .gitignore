@@ -11,6 +11,8 @@ obj/
 *.sln.docstates
 *.sln.ide
 
+*.nupkg
+
 .idea/
 
 
