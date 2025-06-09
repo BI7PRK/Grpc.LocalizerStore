@@ -242,16 +242,46 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
             });
             var cultures = c.Items.ToList();
+            if (!cultures.Any())
+            {
+                _logger.LogWarning("No cultures found in the database, please add cultures first.");
+                return dataSource;
+            }
+            // Get the resource categorys
+            var types = await _channel.CulturesResourceTypeFeatureAsync(new CultureTypesRequest
+            {
+                Action = ActionTypes.List,
+                Index = 1,
+                Size = 999999,
+            });
             foreach (var item in dataSource)
             {
                 try
                 {
+                    if (item.Tid == 0)
+                    {
+                        var type = types.Items.FirstOrDefault(f => f.Name == item.Category);
+                        if (type == null)
+                        {
+                            // If the type does not exist, create a new one
+                            var typeReply = await _channel.CulturesResourceTypeFeatureAsync(new CultureTypesRequest
+                            {
+                                Action = ActionTypes.AddOrUpdate,
+                                ParamData = new CultureTypeItem { Name = item.Category }
+                            });
+                            item.Tid = typeReply.Items.FirstOrDefault()?.Id ?? 0;
+                        }
+                        else
+                        {
+                            item.Tid = type.Id;
+                        }
+                    }
                     var cultureId = cultures.FirstOrDefault(f => f.Code == item.Code)?.Id ?? 0;
                     var res = await _channel.AddResourceKeyValueAsync(new AddCultureKeyValueRequest
                     {
                         Key = item.Key,
                         Values = { new CultureKeyValue { CultureId = cultureId, Text = item.Value } },
-                        TypeId = item.Tid
+                        TypeId = item.Tid,
                     });
                 }
                 catch (Exception ex)
@@ -317,6 +347,8 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         public string Code { get; set; }
 
         public int Tid { get; set; }
+
+        public string? Category { get; set; }
     }
 
     public static class CultureLocalizerServiceExtensions

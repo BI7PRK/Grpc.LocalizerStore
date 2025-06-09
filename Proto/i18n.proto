@@ -74,7 +74,7 @@ message CulturesTypesReply {
     string message = 4;
 }
 message CultureTypeItem {
-    int64 id = 1;
+    int32 id = 1;
     string name = 2; // 语言资源类型名称
     string remark = 3; // 备注
 }
