@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using static Grpc.Core.Metadata;
 
 namespace AspNetCore.Grpc.LocalizerStore.Service
 {
@@ -254,35 +253,41 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 Index = 1,
                 Size = 999999,
             });
+            var typeIdCache = new Dictionary<string, int>();
             foreach (var item in dataSource)
             {
                 try
                 {
-                    if (item.Tid == 0)
+                    if (item.Tid == 0 && !string.IsNullOrWhiteSpace(item.Category))
                     {
-                        var type = types.Items.FirstOrDefault(f => f.Name == item.Category);
-                        if (type == null)
+                        if (typeIdCache.ContainsKey(item.Category))
                         {
-                            // If the type does not exist, create a new one
-                            var typeReply = await _channel.CulturesResourceTypeFeatureAsync(new CultureTypesRequest
-                            {
-                                Action = ActionTypes.AddOrUpdate,
-                                ParamData = new CultureTypeItem { Name = item.Category }
-                            });
-                            item.Tid = typeReply.Items.FirstOrDefault()?.Id ?? 0;
+                            item.Tid = typeIdCache[item.Category];
                         }
                         else
                         {
-                            item.Tid = type.Id;
+                            var type = types.Items.FirstOrDefault(f => f.Name == item.Category);
+                            if (type == null)
+                            {
+                                // If the type does not exist, create a new one
+                                var typeReply = await _channel.CulturesResourceTypeFeatureAsync(new CultureTypesRequest
+                                {
+                                    Action = ActionTypes.AddOrUpdate,
+                                    ParamData = new CultureTypeItem { Name = item.Category }
+                                });
+                                item.Tid = typeReply.Items.FirstOrDefault()?.Id ?? 0;
+                            }
+                            else
+                            {
+                                item.Tid = type.Id;
+                            }
+                            if (item.Tid > 0)
+                            {
+                                // Cache the type ID for future use
+                                typeIdCache[item.Category] = item.Tid;
+                            }
                         }
                     }
-                    var cultureId = cultures.FirstOrDefault(f => f.Code == item.Code)?.Id ?? 0;
-                    var res = await _channel.AddResourceKeyValueAsync(new AddCultureKeyValueRequest
-                    {
-                        Key = item.Key,
-                        Values = { new CultureKeyValue { CultureId = cultureId, Text = item.Value } },
-                        TypeId = item.Tid,
-                    });
                 }
                 catch (Exception ex)
                 {
