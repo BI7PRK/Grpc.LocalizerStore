@@ -273,7 +273,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                                 var typeReply = await _channel.CulturesResourceTypeFeatureAsync(new CultureTypesRequest
                                 {
                                     Action = ActionTypes.AddOrUpdate,
-                                    ParamData = new CultureTypeItem { Name = item.Category }
+                                    ParamData = new CultureTypeItem { Name = item.Category, Remark = "" },
                                 });
                                 item.Tid = typeReply.Items.FirstOrDefault()?.Id ?? 0;
                             }
@@ -288,6 +288,14 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                             }
                         }
                     }
+                    var cultureId = cultures.FirstOrDefault(f => f.Code == item.Code)?.Id ?? 0;
+                    var res = await _channel.AddResourceKeyValueAsync(new AddCultureKeyValueRequest
+                    {
+                        Key = item.Key,
+                        Values = { new CultureKeyValue { CultureId = cultureId, Text = item.Value } },
+                        TypeId = item.Tid
+                    });
+
                 }
                 catch (Exception ex)
                 {
