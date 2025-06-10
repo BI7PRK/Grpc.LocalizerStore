@@ -336,6 +336,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                         Value = attr.Value ?? "",
                         Key = (key ?? field.Name).ToUpper(),
                         Tid = attr.Tid,
+                        Category = attr.Category
                     });
                 }
 
