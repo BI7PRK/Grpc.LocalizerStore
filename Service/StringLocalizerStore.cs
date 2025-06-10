@@ -115,7 +115,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             }
             else
             {
-                return name;
+                return name.ToUpper();
             }
         }
         /// <summary>
@@ -133,7 +133,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 }
                 else
                 {
-                    return name;
+                    return name.ToUpper();
                 }
             }
         }
