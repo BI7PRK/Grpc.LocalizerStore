@@ -11,6 +11,7 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,10 +31,7 @@ jobs:
 
       - name: Pack NuGet package
         run: |
-          # 从标签获取版本号（去掉 'v' 前缀）
-          VERSION=${{ github.ref_name }}
-          VERSION=${VERSION#v}
-          dotnet pack --configuration Release --no-build -p:PackageVersion=$VERSION -o ./nupkg
+          dotnet pack --configuration Release --no-build -p:PackageVersion=${{ inputs.version }} -o ./nupkg
 
       - name: Push NuGet package
         run: |
