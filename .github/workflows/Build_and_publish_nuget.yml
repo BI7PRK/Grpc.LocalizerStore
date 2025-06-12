@@ -1,0 +1,40 @@
+name: Publish NuGet Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # 匹配如 v1.0.0 的标签
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取所有历史记录以确保版本正确
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Pack NuGet package
+        run: |
+          # 从标签获取版本号（去掉 'v' 前缀）
+          VERSION=${{ github.ref_name }}
+          VERSION=${VERSION#v}
+          dotnet pack --configuration Release --no-build -p:PackageVersion=$VERSION -o ./nupkg
+
+      - name: Push NuGet package
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --source https://nuget.asiatrip.club/v3/index.json \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --skip-duplicate
