@@ -1,9 +1,12 @@
 name: Publish NuGet Package
 
 on:
-  push:
-    tags:
-      - 'v*.*.*' # 匹配如 v1.0.0 的标签
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'NuGet package version (e.g., 1.0.0)'
+        required: true
+        type: string
 
 jobs:
   build-and-publish:
