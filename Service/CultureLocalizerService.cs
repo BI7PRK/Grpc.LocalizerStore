@@ -241,7 +241,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
             });
             var cultures = c.Items.ToList();
-            if (!cultures.Any())
+            if (cultures.Count == 0)
             {
                 _logger.LogWarning("No cultures found in the database, please add cultures first.");
                 return dataSource;
@@ -260,9 +260,9 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 {
                     if (item.Tid == 0 && !string.IsNullOrWhiteSpace(item.Category))
                     {
-                        if (typeIdCache.ContainsKey(item.Category))
+                        if (typeIdCache.TryGetValue(item.Category, out int value))
                         {
-                            item.Tid = typeIdCache[item.Category];
+                            item.Tid = value;
                         }
                         else
                         {
@@ -299,7 +299,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "AddResourceKeyValueAsync failed: {0}", ex.Message);
+                    _logger.LogError(ex, "AddResourceKeyValueAsync failed: {message}", ex.Message);
                     break;
                 }
                
@@ -311,7 +311,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// </summary>
         /// <param name="AssemblyType"></param>
         /// <returns></returns>
-        private IEnumerable<LocalizerResource> FindAllResources(Type AssemblyType)
+        private static IEnumerable<LocalizerResource> FindAllResources(Type AssemblyType)
         {
             var result = new List<LocalizerResource>();
             var filelocal = AssemblyType.Assembly.Location;
@@ -322,11 +322,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             foreach (var item in Directory.GetFiles(dir!, "*.dll"))
             {
                 var source = GetResource(Path.GetFileName(item).Replace(".dll", ""));
-                if (source.Any()) result.AddRange(source);
+                if (source.Count > 0) result.AddRange(source);
             }
             return result.DistinctBy(k => k.Key);
         }
-        private List<LocalizerResource> GetResource(string name)
+        private static List<LocalizerResource> GetResource(string name)
         {
             var result = new List<LocalizerResource>();
             var subClass = typeof(ILocalizerResourceKeys);
