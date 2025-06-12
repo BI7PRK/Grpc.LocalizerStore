@@ -229,7 +229,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                     });
                 }
             }
-            catch (Exception ex)
+            catch
             {
                
             }

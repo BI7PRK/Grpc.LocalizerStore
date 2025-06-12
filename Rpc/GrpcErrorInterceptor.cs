@@ -15,7 +15,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             }
             catch (SocketException ex)
             {
-                throw new Exception("连接失败");
+                throw new Exception($"连接失败：{ ex.Message}");
             }
             catch (RpcException ex)
             {
@@ -42,7 +42,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             }
             catch (SocketException ex)
             {
-                throw new Exception("[HandleResponse] 连接失败");
+                throw new Exception($"[HandleResponse] 连接失败：{ ex.Message}");
             }
             catch (RpcException ex)
             {

@@ -360,15 +360,15 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <summary>
         /// 资源键名
         /// </summary>
-        public string Key { get; set; }
+        public required string Key { get; set; }
         /// <summary>
         /// 资源值
         /// </summary>
-        public string Value { get; set; }
+        public required string Value { get; set; }
         /// <summary>
         /// 资源语言代码
         /// </summary>
-        public string Code { get; set; }
+        public required string Code { get; set; }
         /// <summary>
         /// 资源类别ID
         /// </summary>
