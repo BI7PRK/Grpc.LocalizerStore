@@ -230,7 +230,8 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         }
 
 
-        #region 工具方法       
+        #region 工具方法
+
         public async Task<IEnumerable<LocalizerResource>> ImportRsource(Type assemblyType)
         {
             var dataSource = FindAllResources(assemblyType);
@@ -356,26 +357,25 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
     public class LocalizerResource
     {
-        public string Key { get; set; }
-        public string Value { get; set; }
-        public string Code { get; set; }
-
-        public int Tid { get; set; }
-
-        public string? Category { get; set; }
-    }
-
-    public static class CultureLocalizerServiceExtensions
-    {
         /// <summary>
-        /// 添加本地化资源管理服务
+        /// 资源键名
         /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        public static IServiceCollection AddCultureLocalizerService(this IServiceCollection services)
-        {
-            services.TryAddSingleton<ICultureLocalizerService, CultureLocalizerService>();
-            return services;
-        }
+        public string Key { get; set; }
+        /// <summary>
+        /// 资源值
+        /// </summary>
+        public string Value { get; set; }
+        /// <summary>
+        /// 资源语言代码
+        /// </summary>
+        public string Code { get; set; }
+        /// <summary>
+        /// 资源类别ID
+        /// </summary>
+        public int Tid { get; set; }
+        /// <summary>
+        /// 类别名称
+        /// </summary>
+        public string? Category { get; set; }
     }
 }

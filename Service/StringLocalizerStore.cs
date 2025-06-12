@@ -177,16 +177,30 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// 添加本地化资源服务
         /// </summary>
         /// <param name="services"></param>
+        /// <param name="setupAction"></param>
         /// <returns></returns>
-        public static IServiceCollection AddStringLocalizerStore(this IServiceCollection services)
+        public static IServiceCollection AddLocalizerStore(this IServiceCollection services, Action<LocalizerStoreOption> setupAction)
         {
+            var options = new LocalizerStoreOption();
+            setupAction(options);
+            if (string.IsNullOrWhiteSpace(options.Url))
+            {
+                return services;
+            }
+            services.TryAddSingleton(options);
+            services.TryAddSingleton<GrpcErrorInterceptor>();
+            services.TryAddSingleton<ILocalizerChannel, LocalizerChannel>();
             services.TryAddSingleton<IMemoryCache, MemoryCache>();
             services.TryAddScoped<IStringLocalizerStore, StringLocalizerStore>();
+            if (options.AllowManage)
+            {
+                services.TryAddSingleton<ICultureLocalizerService, CultureLocalizerService>();
+            }
             return services;
         }
 
         /// <summary>
-        /// 添加本地化资源服务
+        /// 添加本地化资源服务，以便在请求中使用
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>

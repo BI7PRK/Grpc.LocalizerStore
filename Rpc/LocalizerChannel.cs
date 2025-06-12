@@ -3,30 +3,35 @@ using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
 {
 
-    public class LocalizerChannelOptions
+    public class LocalizerStoreOption
     {
         /// <summary>
-        /// 请求超时，单位秒
+        /// 本地化服务地址
+        /// </summary>
+        public string Url { get; set; }
+        /// <summary>
+        /// 超时时间
         /// </summary>
         public int Timeout { get; set; } = 30;
-        /// <summary>
-        /// 服务地址
-        /// </summary>
-        public string Url { get; set; } = "";
 
+        /// <summary>
+        /// 请求头
+        /// </summary>
         public Dictionary<string, string> Headers { get; set; } = [];
+
+        /// <summary>
+        /// 是否允许管理本地化资源
+        /// </summary>
+        public bool AllowManage { get; set; }
     }
 
     public class LocalizerChannelBasic
     {
-        public static CallInvoker GetGrpcChannel(GrpcErrorInterceptor errorInterceptor, LocalizerChannelOptions option)
+        public static CallInvoker GetGrpcChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
             var defaultMethodConfig = new MethodConfig
             {
@@ -68,7 +73,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
     {
 
         private readonly I18nService.I18nServiceClient _channel;
-        public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerChannelOptions option)
+        public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
             var _grpcChannel = GetGrpcChannel(errorInterceptor, option);
             _channel = new I18nService.I18nServiceClient(_grpcChannel);
@@ -76,16 +81,4 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         public I18nService.I18nServiceClient Client => _channel;
     }
 
-
-    public static class LocalizerChannelExtensions
-    {
-        public static void AddLocalizerChannel(this IServiceCollection services, Action<LocalizerChannelOptions> setupAction)
-        {
-            var options = new LocalizerChannelOptions();
-            setupAction(options);
-            services.TryAddSingleton(options);
-            services.TryAddSingleton<GrpcErrorInterceptor>();
-            services.TryAddSingleton<ILocalizerChannel, LocalizerChannel>();
-        }
-    }
 }
