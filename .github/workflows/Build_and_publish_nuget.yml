@@ -36,6 +36,6 @@ jobs:
       - name: Push NuGet package
         run: |
           dotnet nuget push ./nupkg/*.nupkg \
-            --source https://nuget.asiatrip.club/v3/index.json \
+            --source ${{ vars.NUGET_URL }} \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --skip-duplicate
