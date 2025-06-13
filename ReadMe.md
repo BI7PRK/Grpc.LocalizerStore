@@ -27,13 +27,15 @@ dotnet add package AspNetCore.Grpc.LocalizerStore
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
-	services.AddLocalizerChannel(opt =>
+	// Add the gRPC Localizer Store service
+	services.AddLocalizerStore(opt =>
 	{
 		opt.Url = "http://localhost:50001";
 	});
-	services.AddCultureLocalizerService();
-	services.AddStringLocalizerStore();
 }
+
+// add the following code to configure the middleware:
+app.UseRequestLocalizatioStore();
 ```
 
 ## gRPC Service
