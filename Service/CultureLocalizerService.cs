@@ -60,8 +60,9 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="index"></param>
         /// <param name="limit"></param>
         /// <param name="key"></param>
+        /// <param name="cultureId"></param>
         /// <returns></returns>
-        Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, string key);
+        Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int cultureId = 0, string key = "");
         /// <summary>
         /// /// 获取语言资源的类别列表
         /// </summary>
