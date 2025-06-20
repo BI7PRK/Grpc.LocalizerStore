@@ -208,13 +208,14 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             });
         }
 
-        public async Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, string key)
+        public async Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int cultureId = 0, string key = "")
         {
             return await _channel.CulturesResourceKeyValueFeatureAsync(new CultureKeyValuesRequest
             {
                 Action = ActionTypes.List,
                 Index = index,
                 Size = limit,
+                ParamData = new CultureKeyValueItem { CultureId = cultureId },
                 SearchKey = key
             });
         }

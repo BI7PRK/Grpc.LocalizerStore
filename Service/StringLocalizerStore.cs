@@ -45,7 +45,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         string GetString(string name);
 
         /// <summary>
-        /// /// 重载本地化资源
+        /// 重载本地化资源
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
