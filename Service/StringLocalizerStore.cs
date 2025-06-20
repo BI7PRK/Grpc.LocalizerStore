@@ -47,8 +47,9 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <summary>
         /// /// 重载本地化资源
         /// </summary>
+        /// <param name="code"></param>
         /// <returns></returns>
-        Task ReloadAsync();
+        Task ReloadAsync(string code);
     }
     public class StringLocalizerStore : IStringLocalizerStore
     {
@@ -62,12 +63,16 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             _i18NChannel = i18NChannel;
             _logger = logger;
             _memoryCache = memoryCache;
-            LoadResource().GetAwaiter().GetResult();
+            var code = CultureInfo.CurrentCulture.Name;
+            LoadResource(code).GetAwaiter().GetResult();
         }
 
-        private async Task LoadResource()
+        private async Task LoadResource(string code)
         {
-            var code = CultureInfo.CurrentCulture.Name;
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                code = CultureInfo.CurrentCulture.Name;
+            }
             if (_memoryCache.TryGetValue(code, out Dictionary<string, string>? data) && data != null)
             {
                 _resources = new ReadOnlyDictionary<string, string>(data);
@@ -162,10 +167,10 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <summary>
         /// 重载本地化资源
         /// </summary>
-        public Task ReloadAsync()
+        public Task ReloadAsync(string code)
         {
-            _memoryCache.Remove(CultureInfo.CurrentCulture.Name);
-            return LoadResource();
+            _memoryCache.Remove(code);
+            return LoadResource(code);
         }
 
         public bool IsSuccessed => _canLoad;

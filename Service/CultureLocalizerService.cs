@@ -348,7 +348,6 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                         Category = attr.Category
                     });
                 }
-
             }
             return result;
         } 
