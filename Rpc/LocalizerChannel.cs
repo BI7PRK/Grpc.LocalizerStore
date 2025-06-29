@@ -3,6 +3,7 @@ using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
+using System.Net.Security;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
 {
@@ -22,6 +23,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// 请求头
         /// </summary>
         public Dictionary<string, string> Headers { get; set; } = [];
+
+        /// <summary>
+        /// 跳过证书验证
+        /// </summary>
+        public bool SkipCertificateValidation { get; set; } = false;
 
         /// <summary>
         /// 是否允许管理本地化资源
@@ -45,13 +51,25 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
                     RetryableStatusCodes = { StatusCode.Unavailable }
                 }
             };
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                {
+                    if (option.SkipCertificateValidation)
+                    {
+                        return true; // 跳过证书验证
+                    }
+                    return errors == SslPolicyErrors.None; // 默认验证
+                }
+            };
+            var httpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15) // 设置超时时间
+            };
             var grpcChannel = GrpcChannel.ForAddress(option.Url, new GrpcChannelOptions
             {
                 ServiceConfig = new ServiceConfig { MethodConfigs = { defaultMethodConfig } },
-                HttpClient = new HttpClient
-                {
-                    Timeout = TimeSpan.FromSeconds(option.Timeout),
-                }
+                HttpClient = httpClient
             });
             return grpcChannel.Intercept(errorInterceptor).Intercept(met =>
             {
