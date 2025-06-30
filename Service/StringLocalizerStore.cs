@@ -73,6 +73,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             {
                 code = CultureInfo.CurrentCulture.Name;
             }
+            //code是否依然为空
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                _logger.LogWarning("Culture code is empty, using default culture.");
+                code = "en-US"; // 默认文化
+            }
             if (_memoryCache.TryGetValue(code, out Dictionary<string, string>? data) && data != null)
             {
                 _resources = new ReadOnlyDictionary<string, string>(data);
@@ -219,11 +225,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
 
                 using var _newScope = _scopeFactory.CreateScope();
                 var localizerStore = _newScope.ServiceProvider.GetService<IStringLocalizerStore>();
-                if (localizerStore != null && localizerStore.IsSuccessed)
+                if (localizerStore != null)
                 {
                     var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
                     if (resources == null || resources.Length == 0)
                     {
+                        logger.LogWarning("No localization resources found.");
                         return app;
                     }
                     var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
