@@ -1,7 +1,5 @@
 ﻿using AspNetCore.Grpc.LocalizerStore.Rpc;
 using GoI18n;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 

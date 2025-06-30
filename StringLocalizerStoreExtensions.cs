@@ -1,0 +1,94 @@
+﻿using AspNetCore.Grpc.LocalizerStore.Rpc;
+using AspNetCore.Grpc.LocalizerStore.Service;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AspNetCore.Grpc.LocalizerStore
+{
+
+    public static class StringLocalizerStoreExtensions
+    {
+        /// <summary>
+        /// 添加本地化资源服务
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="setupAction"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddLocalizerStore(this IServiceCollection services, Action<LocalizerStoreOption> setupAction)
+        {
+            var options = new LocalizerStoreOption();
+            setupAction(options);
+            if (string.IsNullOrWhiteSpace(options.Url))
+            {
+                return services;
+            }
+            services.TryAddSingleton(options);
+            services.TryAddSingleton<GrpcErrorInterceptor>();
+            services.TryAddSingleton<ILocalizerChannel, LocalizerChannel>();
+            services.TryAddSingleton<IMemoryCache, MemoryCache>();
+            services.TryAddScoped<IStringLocalizerStore, StringLocalizerStore>();
+            if (options.AllowManage)
+            {
+                services.TryAddSingleton<ICultureLocalizerService, CultureLocalizerService>();
+            }
+            return services;
+        }
+
+        /// <summary>
+        /// 添加本地化资源服务，以便在请求中使用
+        /// </summary>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseRequestLocalizatioStore(this IApplicationBuilder app)
+        {
+            try
+            {
+
+                var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
+        
+                using var _newScope = _scopeFactory.CreateScope();
+                var localizerStore = _newScope.ServiceProvider.GetService<IStringLocalizerStore>();
+                var _option = _newScope.ServiceProvider.GetService<LocalizerStoreOption>();
+                var logger = _newScope.ServiceProvider.GetRequiredService<ILogger<StringLocalizerStore>>();
+                if (localizerStore != null)
+                {
+                    var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
+                    if (resources == null || resources.Length == 0)
+                    {
+                        logger.LogWarning("No localization resources found.");
+                        return app;
+                    }
+                    var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
+                    var defaultCulture = resources.FirstOrDefault(w => w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
+                    if (_option != null && !string.IsNullOrWhiteSpace(_option.DefaultCulture))
+                    {
+                        defaultCulture = _option.DefaultCulture;
+                    }
+                    logger.LogInformation("The default culture is {defaultCulture}", defaultCulture);
+                    app.UseRequestLocalization(new RequestLocalizationOptions
+                    {
+                        DefaultRequestCulture = new RequestCulture(defaultCulture),
+                        SupportedCultures = supportedCultures,
+                        SupportedUICultures = supportedCultures
+                    });
+                }
+            }
+            catch
+            {
+
+            }
+
+            return app;
+        }
+    }
+}
