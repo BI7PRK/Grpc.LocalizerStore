@@ -33,6 +33,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// 是否允许管理本地化资源
         /// </summary>
         public bool AllowManage { get; set; }
+
+        /// <summary>
+        /// 默认文化
+        /// </summary>
+        public string DefaultCulture { get; set; } = "en-US";
     }
 
     public class LocalizerChannelBasic

@@ -213,9 +213,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         {
             try
             {
+                var logger = app.ApplicationServices.GetRequiredService<ILogger<StringLocalizerStore>>();
                 var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
-                using var _newScope = _scopeFactory.CreateScope();
+                var _option = app.ApplicationServices.GetService<LocalizerStoreOption>();
 
+                using var _newScope = _scopeFactory.CreateScope();
                 var localizerStore = _newScope.ServiceProvider.GetService<IStringLocalizerStore>();
                 if (localizerStore != null && localizerStore.IsSuccessed)
                 {
@@ -226,6 +228,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                     }
                     var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
                     var defaultCulture = resources.FirstOrDefault(w => w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
+                    if (_option!= null && !string.IsNullOrWhiteSpace(_option.DefaultCulture))
+                    {
+                        defaultCulture = _option.DefaultCulture;
+                    }
+                    logger.LogInformation("The default culture is {defaultCulture}", defaultCulture);
                     app.UseRequestLocalization(new RequestLocalizationOptions
                     {
                         DefaultRequestCulture = new RequestCulture(defaultCulture),
