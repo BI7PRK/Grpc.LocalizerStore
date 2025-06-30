@@ -51,15 +51,13 @@ namespace AspNetCore.Grpc.LocalizerStore
         /// <returns></returns>
         public static IApplicationBuilder UseRequestLocalizatioStore(this IApplicationBuilder app)
         {
+            var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
+            using var _newScope = _scopeFactory.CreateScope();
+            var logger = _newScope.ServiceProvider.GetRequiredService<ILogger<StringLocalizerStore>>();
             try
             {
-
-                var _scopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
-        
-                using var _newScope = _scopeFactory.CreateScope();
                 var localizerStore = _newScope.ServiceProvider.GetService<IStringLocalizerStore>();
                 var _option = _newScope.ServiceProvider.GetService<LocalizerStoreOption>();
-                var logger = _newScope.ServiceProvider.GetRequiredService<ILogger<StringLocalizerStore>>();
                 if (localizerStore != null)
                 {
                     var resources = localizerStore.GetCultures().GetAwaiter().GetResult();
@@ -83,9 +81,9 @@ namespace AspNetCore.Grpc.LocalizerStore
                     });
                 }
             }
-            catch
+            catch(Exception ex)
             {
-
+                logger.LogWarning("Failed to load localization resources: {Message}", ex.Message);
             }
 
             return app;
