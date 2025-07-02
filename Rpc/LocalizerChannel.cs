@@ -8,13 +8,15 @@ using System.Net.Security;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
 {
-
+    /// <summary>
+    /// 本地化服务配置选项
+    /// </summary>
     public class LocalizerStoreOption
     {
         /// <summary>
         /// 本地化服务地址
         /// </summary>
-        public string Url { get; set; }
+        public required string Url { get; set; }
         /// <summary>
         /// 超时时间
         /// </summary>
@@ -45,9 +47,17 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// </summary>
         public bool Http2UnencryptedSupport { get; set; } = false;
     }
-
+    /// <summary>
+    /// 本地化服务通道基础类
+    /// </summary>
     public class LocalizerChannelBasic
     {
+        /// <summary>
+        /// 获取 gRPC 通道
+        /// </summary>
+        /// <param name="errorInterceptor"></param>
+        /// <param name="option"></param>
+        /// <returns></returns>
         public static CallInvoker GetGrpcChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
             var defaultMethodConfig = new MethodConfig
@@ -97,21 +107,36 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             });
         }
     }
-
+    /// <summary>
+    /// 本地化服务通道接口
+    /// </summary>
     public interface ILocalizerChannel
     {
+        /// <summary>
+        /// 本地化服务客户端
+        /// </summary>
         I18nService.I18nServiceClient Client { get; }
     }
-
+    /// <summary>
+    /// 本地化服务通道实现
+    /// </summary>
     public class LocalizerChannel : LocalizerChannelBasic, ILocalizerChannel
     {
 
         private readonly I18nService.I18nServiceClient _channel;
+        /// <summary>
+        /// 本地化服务通道构造函数
+        /// </summary>
+        /// <param name="errorInterceptor"></param>
+        /// <param name="option"></param>
         public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
             var _grpcChannel = GetGrpcChannel(errorInterceptor, option);
             _channel = new I18nService.I18nServiceClient(_grpcChannel);
         }
+        /// <summary>
+        /// 本地化服务客户端
+        /// </summary>
         public I18nService.I18nServiceClient Client => _channel;
     }
 
