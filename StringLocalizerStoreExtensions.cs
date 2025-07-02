@@ -28,6 +28,11 @@ namespace AspNetCore.Grpc.LocalizerStore
         {
             var options = new LocalizerStoreOption();
             setupAction(options);
+            if (options.Http2UnencryptedSupport)
+            {
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+
             if (string.IsNullOrWhiteSpace(options.Url))
             {
                 return services;

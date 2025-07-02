@@ -38,6 +38,11 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// 默认文化
         /// </summary>
         public string DefaultCulture { get; set; } = "en-US";
+
+        /// <summary>
+        /// 是否支持未加密的 HTTP/2
+        /// </summary>
+        public bool Http2UnencryptedSupport { get; set; } = false;
     }
 
     public class LocalizerChannelBasic
