@@ -16,7 +16,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         /// <summary>
         /// 本地化服务地址
         /// </summary>
-        public required string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
         /// <summary>
         /// 超时时间
         /// </summary>
