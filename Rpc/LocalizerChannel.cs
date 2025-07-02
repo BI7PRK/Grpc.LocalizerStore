@@ -84,25 +84,23 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
                               return true; // 跳过证书验证
                           }
                           return sslPolicyErrors == SslPolicyErrors.None; // 正常验证
-                      }
+                      },
                  },
+                 ConnectTimeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15), // 设置超时时间
                 PooledConnectionIdleTimeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15), // 连接池空闲超时时间
-                EnableMultipleHttp2Connections = option.Http2UnencryptedSupport, // 允许多个 HTTP/2 连接
             };
-            var httpClient = new HttpClient(handler)
+            var channelOption = new GrpcChannelOptions
             {
-                Timeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15), // 设置超时时间
+                ServiceConfig = new ServiceConfig { MethodConfigs = { defaultMethodConfig } },
+                HttpHandler = handler
             };
             if (option.Http2UnencryptedSupport)
             {
-                httpClient.DefaultRequestVersion = HttpVersion.Version20; // 确保使用 HTTP/2
-                httpClient.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact; // 支持未加密的 HTTP/2    
+                channelOption.HttpVersion = HttpVersion.Version20; // 支持未加密的 HTTP/2
+                channelOption.HttpVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             }
-            var grpcChannel = GrpcChannel.ForAddress(option.Url, new GrpcChannelOptions
-            {
-                ServiceConfig = new ServiceConfig { MethodConfigs = { defaultMethodConfig } },
-                HttpClient = httpClient
-            });
+
+            var grpcChannel = GrpcChannel.ForAddress(option.Url, channelOption);
             return grpcChannel.Intercept(errorInterceptor).Intercept(met =>
             {
                 foreach (var item in option.Headers)
