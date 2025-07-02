@@ -3,6 +3,7 @@ using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
+using Microsoft.Extensions.Options;
 using System.Net.Security;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
@@ -103,6 +104,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         private readonly I18nService.I18nServiceClient _channel;
         public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", option.Http2UnencryptedSupport);
             var _grpcChannel = GetGrpcChannel(errorInterceptor, option);
             _channel = new I18nService.I18nServiceClient(_grpcChannel);
         }
