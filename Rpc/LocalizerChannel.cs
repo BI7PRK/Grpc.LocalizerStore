@@ -75,8 +75,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             };
             var httpClient = new HttpClient(handler)
             {
-                Timeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15) // 设置超时时间
+                Timeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15), // 设置超时时间
             };
+            if (option.Http2UnencryptedSupport)
+            {
+                httpClient.DefaultRequestVersion = new Version(2, 0); // 确保使用 HTTP/2
+                httpClient.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher; // 支持未加密的 HTTP/2    
+            }
             var grpcChannel = GrpcChannel.ForAddress(option.Url, new GrpcChannelOptions
             {
                 ServiceConfig = new ServiceConfig { MethodConfigs = { defaultMethodConfig } },
@@ -104,7 +109,6 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         private readonly I18nService.I18nServiceClient _channel;
         public LocalizerChannel(GrpcErrorInterceptor errorInterceptor, LocalizerStoreOption option)
         {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", option.Http2UnencryptedSupport);
             var _grpcChannel = GetGrpcChannel(errorInterceptor, option);
             _channel = new I18nService.I18nServiceClient(_grpcChannel);
         }
