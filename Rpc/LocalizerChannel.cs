@@ -4,6 +4,7 @@ using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Security;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
@@ -72,16 +73,21 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
                     RetryableStatusCodes = { StatusCode.Unavailable }
                 }
             };
-            var handler = new HttpClientHandler
+            var handler = new SocketsHttpHandler
             {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
-                {
-                    if (option.SkipCertificateValidation)
-                    {
-                        return true; // 跳过证书验证
-                    }
-                    return errors == SslPolicyErrors.None; // 默认验证
-                }
+                 SslOptions = new SslClientAuthenticationOptions
+                 {
+                      RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+                      {
+                          if (option.SkipCertificateValidation)
+                          {
+                              return true; // 跳过证书验证
+                          }
+                          return sslPolicyErrors == SslPolicyErrors.None; // 正常验证
+                      }
+                 },
+                PooledConnectionIdleTimeout = TimeSpan.FromSeconds(option.Timeout > 0 ? option.Timeout : 15), // 连接池空闲超时时间
+                EnableMultipleHttp2Connections = option.Http2UnencryptedSupport, // 允许多个 HTTP/2 连接
             };
             var httpClient = new HttpClient(handler)
             {
@@ -89,8 +95,8 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             };
             if (option.Http2UnencryptedSupport)
             {
-                httpClient.DefaultRequestVersion = new Version(2, 0); // 确保使用 HTTP/2
-                httpClient.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher; // 支持未加密的 HTTP/2    
+                httpClient.DefaultRequestVersion = HttpVersion.Version20; // 确保使用 HTTP/2
+                httpClient.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact; // 支持未加密的 HTTP/2    
             }
             var grpcChannel = GrpcChannel.ForAddress(option.Url, new GrpcChannelOptions
             {
