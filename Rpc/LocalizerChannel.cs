@@ -97,7 +97,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             if (option.Http2UnencryptedSupport)
             {
                 channelOption.HttpVersion = HttpVersion.Version20; // 支持未加密的 HTTP/2
-                channelOption.HttpVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+                channelOption.HttpVersionPolicy = HttpVersionPolicy.RequestVersionExact; // 强制使用 HTTP/2
             }
 
             var grpcChannel = GrpcChannel.ForAddress(option.Url, channelOption);
