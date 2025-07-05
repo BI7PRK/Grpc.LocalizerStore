@@ -116,7 +116,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         public string GetString(string name)
         {
-            if (_resources.TryGetValue(name.ToUpper(), out var value))
+            if (_resources != null && _resources.TryGetValue(name.ToUpper(), out var value))
             {
                 return value;
             }
@@ -134,7 +134,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         {
             get
             {
-                if (_resources.TryGetValue(name.ToUpper(), out var value))
+                if (_resources != null && _resources.TryGetValue(name.ToUpper(), out var value))
                 {
                     return value;
                 }
