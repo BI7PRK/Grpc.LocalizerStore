@@ -16,7 +16,20 @@ service I18nService {
     rpc AddResourceKeyValue(AddCultureKeyValueRequest) returns (CultureBaseReply);
     // 根据语言代码获取翻译资源
     rpc GetCultureResources(CultureCodeRequest) returns (CultureResourcesReply);
+    // 获取多个KeyId获取翻译资源
+    rpc CulturesResourceValueByKeyIds(CultureKeyIdsRequest) returns (CultureKeyIdsReply);
    
+}
+
+message CultureKeyIdsRequest {
+    repeated int32 key_ids = 1; // 资源keyId
+    int32 culture_Id = 2; // 语言ID
+}
+
+message CultureKeyIdsReply {
+    repeated CultureKeyValueItem items = 1;
+    ReplyCode code  = 2;
+    string message = 3;
 }
 
 message CultureCodeRequest {
@@ -74,7 +87,7 @@ message CulturesTypesReply {
     string message = 4;
 }
 message CultureTypeItem {
-    int32 id = 1;
+    int64 id = 1;
     string name = 2; // 语言资源类型名称
     string remark = 3; // 备注
 }

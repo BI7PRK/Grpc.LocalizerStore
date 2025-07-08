@@ -95,6 +95,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="data"></param>
         /// <returns></returns>
         Task<CultureKeyValuesReply> AddOrUpdateResourceKeyValueAsync(CultureKeyValueItem data);
+        /// <summary>
+        /// 根据KeyId集合及语言ID获取翻译数据
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <param name="cultureId"></param>
+        /// <returns></returns>
+        Task<IEnumerable<CultureKeyValueItem>> CulturesResourceValueByKeyIds(int[] keyId, int cultureId);
     }
 
     public class CultureLocalizerService : ICultureLocalizerService
@@ -246,6 +253,20 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         }
 
 
+        public async Task<IEnumerable<CultureKeyValueItem>> CulturesResourceValueByKeyIds(int[] keyId, int cultureId)
+        {
+            var data = _channel.CulturesResourceValueByKeyIds(new CultureKeyIdsRequest
+            {
+                CultureId = cultureId,
+                KeyIds = { keyId }
+            });
+            if (data.Code == ReplyCode.Success)
+            {
+                return data.Items;
+            }
+            return [];
+        }
+
         #region 工具方法
 
         public async Task<IEnumerable<LocalizerResource>> ImportRsource(Type assemblyType)
@@ -301,7 +322,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                             if (item.Tid > 0)
                             {
                                 // Cache the type ID for future use
-                                typeIdCache[item.Category] = item.Tid;
+                                typeIdCache[item.Category] = (int)item.Tid;
                             }
                         }
                     }
@@ -310,7 +331,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                     {
                         Key = item.Key,
                         Values = { new CultureKeyValue { CultureId = cultureId, Text = item.Value } },
-                        TypeId = item.Tid
+                        TypeId = (int)item.Tid
                     });
 
                 }
@@ -387,7 +408,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <summary>
         /// 资源类别ID
         /// </summary>
-        public int Tid { get; set; }
+        public long Tid { get; set; }
         /// <summary>
         /// 类别名称
         /// </summary>
