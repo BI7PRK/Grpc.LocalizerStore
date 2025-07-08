@@ -8,6 +8,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
     public interface ICultureLocalizerService
     {
         /// <summary>
+        /// 获取支持语言信息
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<CultureItem?> GetCultureInfo(int id);
+        /// <summary>
         /// 添加国家语言及键值
         /// </summary>
         /// <param name="key"></param>
@@ -102,6 +108,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="cultureId"></param>
         /// <returns></returns>
         Task<IEnumerable<CultureKeyValueItem>> CulturesResourceValueByKeyIds(int[] keyId, int cultureId);
+       
     }
 
     public class CultureLocalizerService : ICultureLocalizerService
@@ -264,8 +271,27 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             {
                 return data.Items;
             }
+            else
+            {
+                _logger.LogError("[CulturesResourceValueByKeyIds] {Message}", data.Message);
+            }
             return [];
         }
+
+        public async Task<CultureItem?> GetCultureInfo(int id)
+        {
+            var data = await _channel.CultureFeatureAsync(new CulturesRequest
+            {
+                Action = ActionTypes.Get,
+                ParamData = new CultureItem { Id = id }
+            });
+            if (data.Code == ReplyCode.Success)
+            {
+                return data.Items.FirstOrDefault();
+            }
+            return  null;
+        }
+
 
         #region 工具方法
 
