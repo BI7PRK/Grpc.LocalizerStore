@@ -89,6 +89,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <param name="assemblyType"></param>
         /// <returns></returns>
         Task<IEnumerable<LocalizerResource>> ImportRsource(Type assemblyType);
+        /// <summary>
+        /// 添加或修改翻译资源
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<CultureKeyValuesReply> AddOrUpdateResourceKeyValueAsync(CultureKeyValueItem data);
     }
 
     public class CultureLocalizerService : ICultureLocalizerService
@@ -217,6 +223,15 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
                 Size = limit,
                 ParamData = new CultureKeyValueItem { CultureId = cultureId, KeyId = keyId },
                 SearchKey = fuzzyKey
+            });
+        }
+
+        public async Task<CultureKeyValuesReply> AddOrUpdateResourceKeyValueAsync(CultureKeyValueItem data)
+        {
+            return await _channel.CulturesResourceKeyValueFeatureAsync(new CultureKeyValuesRequest
+            {
+                Action = ActionTypes.AddOrUpdate,
+                ParamData = data
             });
         }
 
