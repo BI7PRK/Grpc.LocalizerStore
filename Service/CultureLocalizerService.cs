@@ -8,7 +8,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
     public interface ICultureLocalizerService
     {
         /// <summary>
-        /// /添加国家语言及键值
+        /// 添加国家语言及键值
         /// </summary>
         /// <param name="key"></param>
         /// <param name="values"></param>
@@ -16,25 +16,25 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         Task<CultureBaseReply> AddResourceKeyValueAsync(string key, CultureKeyValue[] values, int tid = 0);
         /// <summary>
-        /// /// /// 编辑国家语言
+        /// 编辑国家语言
         /// </summary>
         /// <param name="culture"></param>
         /// <returns></returns>
         Task<CulturesReply> EditCultureAsync(CultureItem culture);
         /// <summary>
-        /// /// /// 编辑语言资源的键
+        /// 编辑语言资源的键
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
         Task<CultureKeysReply> EditResourceKeyAsync(CultureKeyItem data);
         /// <summary>
-        /// /// /// 编辑语言资源的键值
+        /// 编辑语言资源的键值
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
         Task<CultureKeyValuesReply> EditResourceKeyValueAsync(CultureKeyValueItem data);
         /// <summary>
-        /// /// 编辑语言资源类别
+        /// 编辑语言资源类别
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
@@ -45,7 +45,7 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         Task<CulturesReply> GetCultureListAsync();
         /// <summary>
-        /// /// 获取语言资源的键列表
+        /// 获取语言资源的键列表
         /// </summary>
         /// <param name="index"></param>
         /// <param name="limit"></param>
@@ -53,16 +53,17 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         Task<CultureKeysReply> GetResourceKeyPagerAsync(int index, int limit, string key);
         /// <summary>
-        /// /// 获取语言资源的键值列表
+        /// 获取语言资源的键值列表
         /// </summary>
         /// <param name="index"></param>
         /// <param name="limit"></param>
-        /// <param name="key"></param>
+        /// <param name="keyId"></param>
         /// <param name="cultureId"></param>
+        /// <param name="fuzzyKey"></param>
         /// <returns></returns>
-        Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int cultureId = 0, string key = "");
+        Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int keyId = 0, int cultureId = 0, string fuzzyKey = "");
         /// <summary>
-        /// /// 获取语言资源的类别列表
+        /// 获取语言资源的类别列表
         /// </summary>
         /// <param name="index"></param>
         /// <param name="limit"></param>
@@ -70,13 +71,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
         /// <returns></returns>
         Task<CulturesTypesReply> GetResourceTypePagerAsync(int index, int limit, string key);
         /// <summary>
-        /// /// 删除语言资源的键
+        /// 删除语言资源的键
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         Task<CultureKeysReply> RemoveResourceKeyAsync(int id);
         /// <summary>
-        /// /// 删除语言资源类别
+        /// 删除语言资源类别
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -207,15 +208,15 @@ namespace AspNetCore.Grpc.LocalizerStore.Service
             });
         }
 
-        public async Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int cultureId = 0, string key = "")
+        public async Task<CultureKeyValuesReply> GetResourceKeyValuePagerAsync(int index, int limit, int keyId = 0, int cultureId = 0, string fuzzyKey = "")
         {
             return await _channel.CulturesResourceKeyValueFeatureAsync(new CultureKeyValuesRequest
             {
                 Action = ActionTypes.List,
                 Index = index,
                 Size = limit,
-                ParamData = new CultureKeyValueItem { CultureId = cultureId },
-                SearchKey = key
+                ParamData = new CultureKeyValueItem { CultureId = cultureId, KeyId = keyId },
+                SearchKey = fuzzyKey
             });
         }
 
