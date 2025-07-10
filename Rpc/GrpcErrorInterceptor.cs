@@ -1,7 +1,6 @@
 ﻿using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Microsoft.Extensions.Logging;
-using System.Net.Sockets;
 
 namespace AspNetCore.Grpc.LocalizerStore.Rpc
 {
@@ -13,19 +12,12 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
             {
                 return continuation(request, context);
             }
-            catch (SocketException ex)
-            {
-                throw new Exception($"连接失败：{ ex.Message}");
-            }
-            catch (RpcException ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex, "调用GRPC异常 Call Method:{MethodFullName} Request: {Request} HttpUrl:{MethodName}", context.Method.FullName, request, context.Method.Name);
-                throw new Exception(ex.Status.Detail);
             }
-            catch
-            {
-                return Activator.CreateInstance<TResponse>();
-            }
+
+            return Activator.CreateInstance<TResponse>();
         }
         public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(TRequest request, ClientInterceptorContext<TRequest, TResponse> context, AsyncUnaryCallContinuation<TRequest, TResponse> continuation)
         {
@@ -37,22 +29,13 @@ namespace AspNetCore.Grpc.LocalizerStore.Rpc
         {
             try
             {
-                var response = await responseTask;
-                return response;
+                return await responseTask;
             }
-            catch (SocketException ex)
-            {
-                throw new Exception($"[HandleResponse] 连接失败：{ ex.Message}");
-            }
-            catch (RpcException ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex, $"调用GRPC异常 Call Method:{method.FullName} Request: {request}");
-                throw new Exception(ex.Status.Detail);
             }
-            catch
-            {
-                return Activator.CreateInstance<TResponse>();
-            }
+            return Activator.CreateInstance<TResponse>();
         }
     }
 }
