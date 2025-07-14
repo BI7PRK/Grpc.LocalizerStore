@@ -6,12 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AspNetCore.Grpc.LocalizerStore
 {
@@ -67,12 +62,11 @@ namespace AspNetCore.Grpc.LocalizerStore
                         return app;
                     }
                     var supportedCultures = resources.Select(s => new CultureInfo(s.Code)).ToArray();
-                    var defaultCulture = resources.FirstOrDefault(w => w.IsDefault)?.Code ?? CultureInfo.CurrentCulture.Name;
-                    if (_option != null && !string.IsNullOrWhiteSpace(_option.DefaultCulture))
+                    var defaultCulture = _option?.DefaultCulture;
+                    if (string.IsNullOrWhiteSpace(defaultCulture))
                     {
-                        defaultCulture = _option.DefaultCulture;
+                        defaultCulture = (resources.FirstOrDefault(w => w.IsDefault) ?? resources.First()).Code;
                     }
-                    logger.LogInformation("The default culture is {defaultCulture}", defaultCulture);
                     app.UseRequestLocalization(new RequestLocalizationOptions
                     {
                         DefaultRequestCulture = new RequestCulture(defaultCulture),
